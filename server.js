@@ -13,7 +13,15 @@ const { calculateRisk } = require('./utils/riskEngine');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+    origin: [
+        "https://frontend-plum.onrender.com", 
+        "http://localhost:5173",             
+        "http://localhost:5000"             
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true // Allows headers/cookies if needed
+}));
 
 
 connectDB();
