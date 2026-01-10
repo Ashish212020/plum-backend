@@ -40,7 +40,7 @@ A robust backend service that analyzes health survey forms (both scanned images 
 Accepts `multipart/form-data` with an image file OR JSON text.
 
 **Request (Text):**
-```json
+
 ## 🧪 API Testing
 Here is the proof of the API working in Postman:
 
