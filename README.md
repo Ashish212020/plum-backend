@@ -49,5 +49,5 @@ Accepts `multipart/form-data` with an image file OR JSON text.
 ## 🧪 API Testing
 Here is the proof of the API working in Postman:
 
-![Postman API Test](./assets/postman.png)
+![Postman API Test](./assets/postman1.png)
 ![Postman API Test](./assets/postman2.png)
