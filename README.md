@@ -1,6 +1,11 @@
 # 🏥 AI Health Risk Profiler
 
+Backend url:-https://plum-backend.onrender.com
+frontend url:-https://frontend-plum.onrender.com/
+
 A robust backend service that analyzes health survey forms (both scanned images and text input) to assess health risks using OCR and a Rule-Based Inference Engine.
+
+
 
 ## 🚀 Features
 * **Multi-Modal Input:** Accepts scanned images (via Tesseract OCR) or direct JSON/Text input.

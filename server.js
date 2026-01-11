@@ -20,7 +20,7 @@ app.use(express.json({
         "http://localhost:5000"             
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true // Allows headers/cookies if needed
+    credentials: true 
 }));
 
 
@@ -28,11 +28,15 @@ connectDB();
 
 const upload = multer({ dest: 'uploads/' });
 
+
+
+
 app.post('/api/analyze', upload.single('file'), async (req, res) => {
     try {
         let extractedText = "";
         let parsedData = {};
 
+        
         if (req.file) {
             console.log("Processing image...");
             const { data: { text } } = await Tesseract.recognize(req.file.path, 'eng');
@@ -40,31 +44,48 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
             fs.unlinkSync(req.file.path); 
             parsedData = parseOCRText(extractedText);
         } 
-        else if (req.body.text) {
-            console.log("Processing text input...");
-            const input = req.body.text.trim();
+        
+       
+        else if (req.body) {
+            console.log("Processing text/JSON input...");
+            
+            
+            let inputData = req.body.text || req.body;
 
-            try {
-                if (input.startsWith("{")) {
-                    const jsonData = JSON.parse(input);
-                    parsedData = {
-                        age: jsonData.age,
-                        smoker: (jsonData.smoker !== undefined) 
-                            ? (jsonData.smoker === true || jsonData.smoker === "true") 
-                            : undefined,
-                        diet: jsonData.diet,
-                        exercise: jsonData.exercise
-                    };
-                } else {
-                    parsedData = parseOCRText(input);
+            
+            if (typeof inputData === 'string') {
+                inputData = inputData.trim();
+                try {
+                    if (inputData.startsWith("{")) {
+                        inputData = JSON.parse(inputData);
+                    }
+                } catch (e) {
+                   
                 }
-            } catch (e) {
-                parsedData = parseOCRText(input);
+            }
+
+            
+            if (typeof inputData === 'object' && Object.keys(inputData).length > 0) {
+                
+                parsedData = {
+                    age: inputData.age,
+                    smoker: (inputData.smoker !== undefined) 
+                        ? (inputData.smoker === true || inputData.smoker === "true") 
+                        : undefined,
+                    diet: inputData.diet,
+                    exercise: inputData.exercise
+                };
+            } else if (typeof inputData === 'string' && inputData.length > 0) {
+                
+                parsedData = parseOCRText(inputData);
+            } else {
+                 return res.status(400).json({ error: "Please upload an image or provide text." });
             }
         } else {
-            return res.status(400).json({ error: "Please upload an image or provide text." });
+            return res.status(400).json({ error: "Invalid input format." });
         }
 
+       
         let missingCount = 0;
 
         if (!parsedData.age) missingCount++;
@@ -72,14 +93,21 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
         if (!parsedData.diet || parsedData.diet === "unknown") missingCount++;
         if (!parsedData.exercise || parsedData.exercise === "unknown") missingCount++;
 
+        
+        console.log(`Missing Fields: ${missingCount}/4`);
+
+       
         if (missingCount > 2) {
             return res.json({ 
                 status: "incomplete_profile", 
                 reason: ">50% fields missing",
-                message: "Profile Incomplete: >50% of data is missing." 
+                missing_count: missingCount 
             });
         }
+
+        
         const riskAnalysis = calculateRisk(parsedData);
+
         const newProfile = new RiskProfile({
             answers: parsedData,
             riskScore: riskAnalysis.score,
